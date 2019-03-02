@@ -1,3 +1,8 @@
+import '@fortawesome/fontawesome-free/css/all.css'
+import '@/scss/app.scss'
+
+import 'bootstrap'
+
 import Vue from 'vue'
 import Vuex from 'vuex'
 import BootstrapVue from 'bootstrap-vue'
@@ -28,13 +33,21 @@ const store = new Vuex.Store(VuexStore)
 sync(store, router)
 
 // com runtimeCompiler = true
-/* new Vue({ // eslint-disable-line 
+/* new Vue({
   router,
   store,
   el: '#app',
   components: { App },
   template: '<App/>'
 }) */
+
+Vue.mixin({
+  methods: {
+    ...Vuex.mapActions([
+      'sendMessage',
+    ]),
+  }
+})
 
 new Vue({
   router,

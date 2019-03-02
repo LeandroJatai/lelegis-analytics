@@ -1,4 +1,4 @@
-/* const path = require('path')
+/* const path = require('path') 
 const each = require('lodash/fp/each')
 
 const BundleTrackerPlugin = require('webpack-bundle-tracker')
@@ -54,24 +54,6 @@ module.exports = {
     config.resolve.alias
       .set('__STATIC__', 'static')
 
-    config.module
-      .rule('vue')
-      .use('vue-loader')
-      .loader('vue-loader')
-      .tap(options => {
-        options['transformAssetUrls'] = {
-          img: 'src',
-          image: 'xlink:href',
-          'b-img': 'src',
-          'b-img-lazy': ['src', 'blank-src'],
-          'b-card': 'img-src',
-          'b-card-img': 'img-src',
-          'b-carousel-slide': 'img-src',
-          'b-embed': 'src'
-        }
-
-        return options
-      })
 
     config.devServer
       .public('')
@@ -91,6 +73,37 @@ module.exports = {
         path.join(__dirname, 'src', 'assets')
       ])
 
+
+    //config.entryPoints.delete('app')
+
+
+  },
+} */
+
+
+module.exports = {
+
+  chainWebpack: config => {
+
+    config.module
+      .rule('vue')
+      .use('vue-loader')
+      .loader('vue-loader')
+      .tap(options => {
+        options['transformAssetUrls'] = {
+          img: 'src',
+          image: 'xlink:href',
+          'b-img': 'src',
+          'b-img-lazy': ['src', 'blank-src'],
+          'b-card': 'img-src',
+          'b-card-img': 'img-src',
+          'b-carousel-slide': 'img-src',
+          'b-embed': 'src'
+        }
+
+        return options
+      })
+      
     config
       .plugin('provide')
       .use(require('webpack/lib/ProvidePlugin'), [{
@@ -101,8 +114,11 @@ module.exports = {
         _: 'lodash'
       }])
 
-    //config.entryPoints.delete('app')
-
-
-  },
-} */
+    config.devServer
+      .hot(true)
+      .watchOptions({
+        poll: true
+      })
+    
+  }
+}

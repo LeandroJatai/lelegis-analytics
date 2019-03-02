@@ -1,16 +1,8 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import StoreMessage from './stores/message/StoreMessage'
 
-Vue.use(Vuex)
-
-export default new Vuex.Store({
-  state: {
-
+export default {
+  modules: {
+    store__message: StoreMessage
   },
-  mutations: {
-
-  },
-  actions: {
-
-  }
-})
+  strict: process.env.NODE_ENV === 'production'
+}
