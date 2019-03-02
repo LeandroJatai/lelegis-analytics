@@ -1,7 +1,13 @@
 
 from django.urls import path
-from api.views import EstadosViewSet
+from django.urls.conf import include
+from rest_framework.routers import DefaultRouter
+
+from api.views import MunicipioViewSet
+
+router = DefaultRouter()
+router.register(r'municipio', MunicipioViewSet)
 
 urlpatterns = [
-    path('estados/', EstadosViewSet.as_view(), name="estado_api_list"),
+    path('', include(router.urls)),
 ]

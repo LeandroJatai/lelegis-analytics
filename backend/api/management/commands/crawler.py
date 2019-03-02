@@ -1,11 +1,13 @@
 import json
+from platform import node
 from time import sleep
 
 from django.core.management.base import BaseCommand
 from django.db.models.aggregates import Count
 from django.utils.text import slugify
 import urllib3
-from backend.api.models import Municipio, CrawlerAction
+
+from api.models import Municipio, CrawlerAction, PesquisaNode, Action
 
 
 class Command(BaseCommand):
@@ -21,50 +23,133 @@ class Command(BaseCommand):
             ).order_by('nome')"""
             
         municipios = Municipio.objects.annotate(
-            crawler_count=Count('crawleraction')
-        ).order_by('crawler_count', 'nome')
-        
-        primeiro = municipios.first()
-        
-        municipios = municipios.filter(crawler_count=primeiro.crawler_count)
-        
-        print('tentativa', primeiro.crawler_count + 1, ': Fazendo 1000 de', municipios.count())
+            action_count=Count('action')
+        ).order_by('action_count', 'nome')        
+        primeiro = municipios.first()        
+        municipios = municipios.filter(action_count=primeiro.action_count)
+        print('tentativa', primeiro.action_count + 1, ': Total a fazer', municipios.count())
         
         urllib3.disable_warnings()
-        http = urllib3.PoolManager(timeout=3.0)
-        for m in municipios[:1000]:
-            domain = m.domain
-            if not domain:
-                domainmask = '{}://{}.{}.{}.leg.br'
+        http = urllib3.PoolManager(timeout=10.0)
+        m_count = 0
+        for m in municipios:
+            m_count += 1
+            if not  m.domain:
+                domainmask = '{}.{}.leg.br'
                 
                 nome = m.nome.replace(' ', '')
                 
-                domain = domainmask.format(
-                    'https',
-                    'sapl',
+                domainmask = domainmask.format(
                     slugify(nome),
                     m.uf.lower()
                     )
                
-                m.domain = domain
+                m.domain = domainmask
                 m.save()
-            
-            c = CrawlerAction()
-            c.municipio = m
-            c.domain = domain 
-            
-            # print('test:', domain, ' - ', m.nome)
-            try:                
-                print('GET:', domain, ' - ', m.nome,)
-                r = http.request('GET', ('{}/api/base/casalegislativa'.format(domain)))
-                data = r.data.decode('utf-8')
-                jdata = json.loads(data)
-                c.json_casalegislativa = jdata['results']
-                c.ping_success = True
-            except Exception as e:
-                c.json_casalegislativa = [{'error': str(e)}]
                 
-                print('.... ERROR:', domain, ' - ', m.nome)
+            pesquisas = PesquisaNode.objects.filter(parent__isnull=True)
+            
+            def run(node, protocolo=None):
                 
-            c.save()
-            sleep(3)
+                if not isinstance(node, PesquisaNode):
+                    for n in node:
+                        run(n)
+                    return
+                
+                if not protocolo:
+                    errors = []
+                    for p in node.protocolo:
+                        try: 
+                            run(node, p)
+                            errors = []
+                            break
+                        except Exception as e:
+                            errors.append({p:str(e)})
+                            pass
+                    if errors:
+                        a = Action()
+                        a.municipio = m
+                        a.tipo = node
+                        a.ping = False
+                        a.json = errors
+                        a.save()
+                        
+                    if not node.restritivo or node.restritivo and not errors:
+                        run(node.childs.all())
+                    return
+                
+                uri = '{protocolo}://{servico}.{dominio}/{action}'.format(
+                    protocolo=protocolo,
+                    servico=node._servico,
+                    dominio=m.domain,
+                    action=node.action_view
+                    )
+                
+                print('GET:', m_count, uri, ' - ', m.nome,)
+                data = None
+                try: 
+                    r = http.request('GET', uri)
+                    
+                    if not node.tipo_response:
+                        a = Action()
+                        a.municipio = m
+                        a.tipo = node
+                        a.ping = True
+                        a.json = {
+                            'status': r.status,
+                            'reason': r.reason,
+                            'uri': uri
+                        }
+                        a.save()
+                        return
+                    
+                except Exception as e:                    
+                    print('...: erro..........................', str(e)[:50])
+                    raise Exception(uri, str(e))
+                
+                try:
+                    data = r.data.decode('utf-8')                    
+                except Exception as e:                    
+                    print('...: erro...')
+                    raise Exception(uri, str(e))
+                    
+                jdata = {}
+                try:
+                    jdata = json.loads(data)                  
+                except Exception as e:                    
+                    print('...: erro...')
+                    raise Exception(uri, str(e))
+                
+                captures = node.tipo_response.split(',')
+                
+                funcs = {
+                    'list': list,
+                    'dict': dict
+                }
+                json_result = {}
+                for capture in captures:
+                    actions = capture.strip().split('__')
+                    
+                    obj = jdata
+                    for a in actions: 
+                        if a in funcs:
+                            obj = funcs[a](obj)
+                        else:
+                            obj = obj[a]
+                    json_result[capture] = obj
+
+                a = Action()
+                a.municipio = m
+                a.tipo = node
+                a.ping = True
+                a.json = {
+                    'status': r.status,
+                    'reason': r.reason,
+                    'uri': uri,
+                    'result': json_result if captures else jdata
+                }
+                a.save()
+ 
+            run(pesquisas)
+ 
+            sleep(1)           

@@ -1,14 +1,42 @@
-from django.shortcuts import render
-from rest_framework import views
+
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from api.models import UF
-from api.serializers import ChoiceSerializer
+from rest_framework.viewsets import ReadOnlyModelViewSet
+
+from api.forms import MunicipioFilterSet
+from api.models import Municipio, CrawlerAction
+from api.serializers import MunicipioSerializer
 
 
-# Create your views here.
-class EstadosViewSet(views.APIView):
-
-    def get(self, request, *args, **kwargs):
+class MunicipioViewSet(ReadOnlyModelViewSet):
+    serializer_class = MunicipioSerializer
+    queryset = Municipio.objects.all()
+    filter_class = MunicipioFilterSet
+    
+    @action(detail=False)
+    def resumo_pais(self, request, *args, **kwargs):
         
-        ufs = ChoiceSerializer(UF, many=True).data
-        return Response(ufs) 
+        crawlers = CrawlerAction.objects.order_by(
+            'municipio', '-date_test').distinct('municipio')
+            
+        pings = crawlers.values_list('ping_success', flat=True)
+                
+        fails = len(list(filter(lambda x: not x, pings)))
+        valids = len(list(filter(lambda x: x, pings)))
+        
+        casas = CrawlerAction.objects.order_by(
+            'municipio', '-date_test').distinct(
+                'municipio').values_list('json_casalegislativa', flat=True)
+                
+        # Uma casa que respondeu e possui registro em base/casalegislativa
+        configuradas = len(list(filter(lambda x: len(x) > 0 and 'error' not in x[0], casas)))
+        
+        results = [
+            ('fails', fails),
+            ('valids', valids),
+            ('totals', fails + valids),
+            ('configs', configuradas)
+            ]
+        
+        return Response(results)
+        
