@@ -49,15 +49,17 @@ export default {
     grid-template-rows: $heightHeader;
 
     & ~ main {
-      margin-top: $heightHeader;
+      margin-top: $heightHeader * 1.5;
       transition: 0.5s all;
     }
     &.topo-header ~ main {
       transition: 0.5s all;
-      margin-top: $heightHeader * 2.208333333;
+      margin-top: 0;
     }
 
     &.topo-header {
+
+      position: relative;
       transition: 0.5s all;
       padding: $heightHeader * 0.2 $heightHeader * 0.2 0;
 

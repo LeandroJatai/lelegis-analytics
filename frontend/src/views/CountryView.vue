@@ -1,25 +1,54 @@
 <template>
   <div class="country-view">
-
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div class="inner-list">
+      <div class="empty-list" v-if="pesquisas.length === 0 && init">
+          Não foram encontradas Dados no LeLegis Analytics!
+      </div>
+      <div class="empty-list" v-if="!init">
+          Carregando listagem...
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
+
+import Resources from '@/resources'
 
 export default {
   name: 'CountryView',
   components: {
-    HelloWorld
   },
   data () {
-
+    return {
+      utils: Resources.Utils,
+      init: false,
+      pesquisas: [],
+      pagination: []
+    }
+  },
+  created () {
+    let _this = this
+    _this
+      .utils
+      .getPesquisa()
+      .then(response => {
+        _this.init = true
+        _this.pesquisas = []
+        _this.$nextTick()
+          .then(function () {
+            _this.pesquisas = response.data.results
+            _this.pagination = response.data.pagination
+          })
+      })
+      .catch((response) => {
+        _this.init = true
+        _this.sendMessage({
+          alert: 'danger',
+          message: 'Não foi possível recuperar dados...',
+          time: 5 })
+      })
   }
 }
 </script>

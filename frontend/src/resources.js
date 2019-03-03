@@ -1,5 +1,5 @@
 import axios from 'axios'
-const basePath = '/api'
+const basePath = 'http://localhost:9000/api'
 
 axios.defaults.xsrfCookieName = 'csrftoken'
 axios.defaults.xsrfHeaderName = 'X-CSRFToken'
@@ -14,8 +14,8 @@ export default {
       url: `${basePath}/${app}/${model}/?page=${page}`,
       method: 'GET'
     }),
-    getModel: (app, model, id) => axios({
-      url: `${basePath}/${app}/${model}/${id}`,
+    getPesquisa: (id = '') => axios({
+      url: `${basePath}/pesquisa/${id}`,
       method: 'GET'
     })
   }

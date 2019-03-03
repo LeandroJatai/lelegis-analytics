@@ -21,50 +21,54 @@ class Command(BaseCommand):
                 'Agudo',
                 'Piraí')
             ).order_by('nome')"""
-            
+
         municipios = Municipio.objects.annotate(
             action_count=Count('action')
-        ).order_by('action_count', 'nome')        
-        primeiro = municipios.first()        
+        ).order_by('action_count', 'nome')
+        primeiro = municipios.first()
         municipios = municipios.filter(action_count=primeiro.action_count)
-        print('tentativa', primeiro.action_count + 1, ': Total a fazer', municipios.count())
-        
+        print('tentativa', primeiro.action_count + 1,
+              ': Total a fazer', municipios.count())
+
         urllib3.disable_warnings()
         http = urllib3.PoolManager(timeout=10.0)
         m_count = 0
         for m in municipios:
             m_count += 1
-            if not  m.domain:
+            if not m.domain:
                 domainmask = '{}.{}.leg.br'
-                
+
                 nome = m.nome.replace(' ', '')
-                
+
                 domainmask = domainmask.format(
                     slugify(nome),
                     m.uf.lower()
-                    )
-               
+                )
+
                 m.domain = domainmask
                 m.save()
-                
+
             pesquisas = PesquisaNode.objects.filter(parent__isnull=True)
-            
+
             def run(node, protocolo=None):
-                
+
                 if not isinstance(node, PesquisaNode):
                     for n in node:
                         run(n)
                     return
-                
+
                 if not protocolo:
                     errors = []
                     for p in node.protocolo:
-                        try: 
+                        try:
                             run(node, p)
                             errors = []
                             break
                         except Exception as e:
-                            errors.append({p:str(e)})
+                            if hasattr(e, 'args'):
+                                errors.append({p: e.args})
+                            else:
+                                errors.append({p: str(e)})
                             pass
                     if errors:
                         a = Action()
@@ -73,23 +77,23 @@ class Command(BaseCommand):
                         a.ping = False
                         a.json = errors
                         a.save()
-                        
+
                     if not node.restritivo or node.restritivo and not errors:
                         run(node.childs.all())
                     return
-                
+
                 uri = '{protocolo}://{servico}.{dominio}/{action}'.format(
                     protocolo=protocolo,
                     servico=node._servico,
                     dominio=m.domain,
                     action=node.action_view
-                    )
-                
+                )
+
                 print('GET:', m_count, uri, ' - ', m.nome,)
                 data = None
-                try: 
+                try:
                     r = http.request('GET', uri)
-                    
+
                     if not node.tipo_response:
                         a = Action()
                         a.municipio = m
@@ -102,26 +106,26 @@ class Command(BaseCommand):
                         }
                         a.save()
                         return
-                    
-                except Exception as e:                    
+
+                except Exception as e:
                     print('...: erro..........................', str(e)[:50])
                     raise Exception(uri, str(e))
-                
+
                 try:
-                    data = r.data.decode('utf-8')                    
-                except Exception as e:                    
+                    data = r.data.decode('utf-8')
+                except Exception as e:
                     print('...: erro...')
                     raise Exception(uri, str(e))
-                    
+
                 jdata = {}
                 try:
-                    jdata = json.loads(data)                  
-                except Exception as e:                    
+                    jdata = json.loads(data)
+                except Exception as e:
                     print('...: erro...')
                     raise Exception(uri, str(e))
-                
+
                 captures = node.tipo_response.split(',')
-                
+
                 funcs = {
                     'list': list,
                     'dict': dict
@@ -129,27 +133,33 @@ class Command(BaseCommand):
                 json_result = {}
                 for capture in captures:
                     actions = capture.strip().split('__')
-                    
+
                     obj = jdata
-                    for a in actions: 
+                    for a in actions:
                         if a in funcs:
                             obj = funcs[a](obj)
                         else:
                             obj = obj[a]
-                    json_result[capture] = obj
+                            json_result[a] = obj
+
+                if not json_result:
+                    json_result = {
+                        'results': jdata
+                    }
+
+                json_result.update({
+                    'status': r.status,
+                    'reason': r.reason,
+                    'uri': uri,
+                })
 
                 a = Action()
                 a.municipio = m
                 a.tipo = node
                 a.ping = True
-                a.json = {
-                    'status': r.status,
-                    'reason': r.reason,
-                    'uri': uri,
-                    'result': json_result if captures else jdata
-                }
+                a.json = json_result
                 a.save()
- 
+
             run(pesquisas)
- 
-            sleep(1)           
+
+            sleep(3)

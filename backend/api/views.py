@@ -3,10 +3,24 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from api.forms import MunicipioFilterSet
-from api.models import Municipio, CrawlerAction
-from api.serializers import MunicipioSerializer
+from api.forms import MunicipioFilterSet, PesquisaFilterSet
+from api.models import Municipio, CrawlerAction, PesquisaNode
+from api.serializers import MunicipioSerializer, PesquisaSerializer
 
+
+class PesquisaViewSet(ReadOnlyModelViewSet):
+    serializer_class = PesquisaSerializer
+    queryset = PesquisaNode.objects.all()
+    filter_class = PesquisaFilterSet
+
+    def list(self, request, *args, **kwargs):
+        self.queryset = PesquisaNode.objects.filter(parent__isnull=True)
+        return ReadOnlyModelViewSet.list(self, request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        self.queryset = PesquisaNode.objects.all()   
+        return ReadOnlyModelViewSet.retrieve(self, request, *args, **kwargs)
+    
 
 class MunicipioViewSet(ReadOnlyModelViewSet):
     serializer_class = MunicipioSerializer
@@ -15,7 +29,6 @@ class MunicipioViewSet(ReadOnlyModelViewSet):
     
     @action(detail=False)
     def resumo_pais(self, request, *args, **kwargs):
-        
         crawlers = CrawlerAction.objects.order_by(
             'municipio', '-date_test').distinct('municipio')
             

@@ -3,7 +3,7 @@ from django.utils.text import capfirst
 from django_filters.filters import CharFilter
 from django_filters.rest_framework.filterset import FilterSet
 from django_filters.utils import resolve_field
-from api.models import Municipio
+from api.models import Municipio, PesquisaNode
 
 
 class FilterSetMixin(FilterSet):
@@ -52,3 +52,10 @@ class MunicipioFilterSet(FilterSetMixin):
 
     class Meta(FilterSetMixin.Meta):
         model = Municipio
+
+
+class PesquisaFilterSet(FilterSetMixin):
+
+    class Meta(FilterSetMixin.Meta):
+        model = PesquisaNode
+        exclude = ('protocolo',)

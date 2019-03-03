@@ -110,6 +110,9 @@ class PesquisaNode(models.Model):
         ('ws', 'ws'),
     )    
     
+    title = models.CharField(max_length=1000,
+        blank=True, default='') 
+
     parent = models.ForeignKey(
         'self',
         blank=True, null=True, default=None,
@@ -133,6 +136,7 @@ class PesquisaNode(models.Model):
         verbose_name=_('Restrige aprofundamento da árvore'))
     
     tipo_response = models.CharField(max_length=1000, default='', blank=True) 
+    description = models.TextField(blank=True, default='') 
     
     @property
     def _servico(self):
