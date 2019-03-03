@@ -31,7 +31,7 @@ class Command(BaseCommand):
               ': Total a fazer', municipios.count())
 
         urllib3.disable_warnings()
-        http = urllib3.PoolManager(timeout=10.0)
+        http = urllib3.PoolManager(timeout=3.0)
         m_count = 0
         for m in municipios:
             m_count += 1

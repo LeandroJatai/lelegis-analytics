@@ -1,12 +1,19 @@
 <template>
-  <div class="country-view">
+  <div class="lelegis-view">
     <div class="inner-list">
-      <div class="empty-list" v-if="pesquisas.length === 0 && init">
-          Não foram encontradas Dados no LeLegis Analytics!
-      </div>
-      <div class="empty-list" v-if="!init">
-          Carregando listagem...
-      </div>
+      <b-container fluid>
+        <b-row>
+          <b-col v-for="(item, key) in pesquisas" :key="key+1">
+            <PesquisaPais :pesquisa="item"></PesquisaPais>
+          </b-col>
+        </b-row>
+      </b-container>
+      <h4 class="empty-list" v-if="pesquisas.length === 0 && init">
+          Não foram encontradas dados no LeLegis Analytics!
+      </h4>
+      <h4 class="empty-list" v-if="!init">
+          Carregando Informações...
+      </h4>
     </div>
   </div>
 </template>
@@ -15,10 +22,12 @@
 // @ is an alias to /src
 
 import Resources from '@/resources'
+import PesquisaPais from '@/components/PesquisaPais'
 
 export default {
-  name: 'CountryView',
+  name: 'LelegisView',
   components: {
+    PesquisaPais
   },
   data () {
     return {
@@ -52,3 +61,14 @@ export default {
   }
 }
 </script>
+
+<style lang="sass">
+
+.lelegis-view
+  .empty-list
+    padding: 2rem 1rem
+
+  .inner-list
+    padding: 3rem 0;
+
+</style>

@@ -43,7 +43,7 @@ UF = [
 YES_NO_CHOICES = [(True, _('Sim')), (False, _('Não'))]
 
 
-class Municipio(models.Model): 
+class Municipio(models.Model):
 
     REGIAO_CHOICES = (
         ('CO', 'Centro-Oeste'),
@@ -61,7 +61,7 @@ class Municipio(models.Model):
         max_length=2, blank=True, choices=REGIAO_CHOICES)
 
     domain = models.CharField(max_length=1000, default='')
-    
+
     class Meta:
         verbose_name = _('Município')
         verbose_name_plural = _('Municípios')
@@ -102,16 +102,21 @@ class ChoiceArrayField(ArrayField):
 
 
 class PesquisaNode(models.Model):
-    
+
+    class Meta:
+        verbose_name = _('Configuração de Pequisa')
+        verbose_name_plural = _('Configurações de Pequisa')
+        ordering = ('title', )
+
     PROTOCOLO_CHOICES = (
         ('https', 'https'),
         ('http', 'http'),
         ('wss', 'wss'),
         ('ws', 'ws'),
-    )    
-    
+    )
+
     title = models.CharField(max_length=1000,
-        blank=True, default='') 
+                             blank=True, default='')
 
     parent = models.ForeignKey(
         'self',
@@ -119,29 +124,29 @@ class PesquisaNode(models.Model):
         related_name='childs',
         verbose_name=_('Parent'),
         on_delete=PROTECT)
-    
-    servico = models.CharField(max_length=30, default='', blank=True) 
+
+    servico = models.CharField(max_length=30, default='', blank=True)
 
     action_view = models.CharField(max_length=1000,
-        blank=True, default='') 
+                                   blank=True, default='')
 
     protocolo = ChoiceArrayField(
         models.CharField(max_length=10,
                          choices=PROTOCOLO_CHOICES),
         default=list)
-        
+
     restritivo = models.BooleanField(
         default=False,
         choices=YES_NO_CHOICES,
         verbose_name=_('Restrige aprofundamento da árvore'))
-    
-    tipo_response = models.CharField(max_length=1000, default='', blank=True) 
-    description = models.TextField(blank=True, default='') 
-    
+
+    tipo_response = models.CharField(max_length=1000, default='', blank=True)
+    description = models.TextField(blank=True, default='')
+
     @property
     def _servico(self):
         return self.servico if self.servico else self.parent._servico
-    
+
     def __str__(self):
         str_self = '{}:{}'.format(self._servico, self.action_view)
         if not self.parent:
@@ -151,7 +156,7 @@ class PesquisaNode(models.Model):
 
 class CrawlerAction(models.Model):
     municipio = ForeignKey(Municipio, on_delete=PROTECT)
-        
+
     date_test = models.DateTimeField(
         verbose_name=_('Data de Teste'),
         editable=False, auto_now_add=True)
@@ -160,18 +165,18 @@ class CrawlerAction(models.Model):
         default=False,
         choices=YES_NO_CHOICES,
         verbose_name=_('Sapl Respondeu'))
-    
+
     json_casalegislativa = JSONField(default=dict)
-        
+
     domain = URLField(default='')
 
 
 class Action(models.Model):
     municipio = ForeignKey(Municipio, on_delete=PROTECT)
-    
+
     tipo = models.ForeignKey(
         PesquisaNode, on_delete=PROTECT)
-        
+
     data = models.DateTimeField(
         verbose_name=_('Data de Teste'),
         editable=False, auto_now_add=True)
@@ -180,8 +185,7 @@ class Action(models.Model):
         default=False,
         choices=YES_NO_CHOICES,
         verbose_name=_('Serviço Respondeu'))
-    
+
     json = JSONField(default=dict)
-        
+
     domain = URLField(default='')
-    

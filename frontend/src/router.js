@@ -14,8 +14,8 @@ export default new Router({
       children: [
         {
           path: '/',
-          name: 'country_view',
-          component: () => import('@/views/CountryView.vue')
+          name: 'lelegis_view',
+          component: () => import('@/views/LelegisView.vue')
         },
         {
           path: '/about',

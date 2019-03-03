@@ -15,4 +15,5 @@ drf-yasg==1.13.0
 djangorestframework==3.9.0
 django-filter==2.0.0
 
-django-cors-headers
+
+django-webpack-loader

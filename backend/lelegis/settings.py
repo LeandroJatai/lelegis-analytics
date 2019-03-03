@@ -38,10 +38,8 @@ INSTALLED_APPS = (
     'drf_yasg',
     'rest_framework',
     'django_filters',
-    'corsheaders',
+    'webpack_loader'
 )
-
-CORS_ORIGIN_ALLOW_ALL = True
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -62,9 +60,9 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
-    #"DEFAULT_AUTHENTICATION_CLASSES": (
-    #    "rest_framework.authentication.SessionAuthentication",
-    #),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+    ),
     "DEFAULT_PAGINATION_CLASS": "api.pagination.StandardPagination",
     "DEFAULT_FILTER_BACKENDS": (
         "rest_framework.filters.SearchFilter",
@@ -77,7 +75,7 @@ ROOT_URLCONF = 'lelegis.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': ['backend/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -148,6 +146,15 @@ SHORT_DATETIME_FORMAT = 'd/m/Y H:i'
 DATE_INPUT_FORMATS = ('%d/%m/%Y', '%m-%d-%Y', '%Y-%m-%d')
 
 STATIC_ROOT = PROJECT_DIR.child("frontend").child('dist')
+
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'CACHE': not DEBUG,
+        'BUNDLE_DIR_NAME': 'dist/',
+        'STATS_FILE': PROJECT_DIR.child('frontend').child('webpack-stats.json'),
+    }
+}
+
 
 MEDIA_ROOT = PROJECT_DIR.child("media")
 MEDIA_URL = '/media/'

@@ -1,4 +1,4 @@
-/* const path = require('path') 
+const path = require('path') 
 const each = require('lodash/fp/each')
 
 const BundleTrackerPlugin = require('webpack-bundle-tracker')
@@ -19,11 +19,9 @@ class RelativeBundleTrackerPlugin extends BundleTrackerPlugin {
   }
 }
 var HOST_NAME = 'localhost'
-
+/* 
 module.exports = {
-  //runtimeCompiler: true,
-  //publicPath: process.env.NODE_ENV === 'production' ? '/' : `http://${HOST_NAME}:8080/`,
-  //outputDir: 'dist',
+  
 
   chainWebpack: config => {
     //config.plugins.delete('html')
@@ -82,8 +80,21 @@ module.exports = {
 
 
 module.exports = {
-
+  runtimeCompiler: true,
+  publicPath: process.env.NODE_ENV === 'production' ? '/' : `http://${HOST_NAME}:8080/`,
+  outputDir: 'dist',
   chainWebpack: config => {
+
+    config.plugins.delete('html')
+    config.plugins.delete('preload')
+    config.plugins.delete('prefetch')
+
+    config
+      .plugin('RelativeBundleTrackerPlugin')
+      .use(RelativeBundleTrackerPlugin, [{
+        path: '.',
+        filename: './webpack-stats.json'
+      }])  
 
     config.module
       .rule('vue')
@@ -121,8 +132,13 @@ module.exports = {
       })
       .headers({
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': "Origin, X-Requested-With, Content-Type, Accept"
       })
-    
+
+    config.entryPoints.delete('app')
+
+    config.entry('lelegis')
+      .add('./src/main.js')
+      .end()
+
   }
 }

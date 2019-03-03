@@ -1,11 +1,11 @@
 <template>
-  <header :class="[scrollY === 0 ? 'topo-header' : '']"   v-on:scroll.native="handleScroll">
+  <header :class="[scrollY === 0 ? 'topo-header1' : '']"   v-on:scroll.native="handleScroll">
     <div class="logo">
       <img alt="LeLegis Analytics" src="@/assets/logo.svg">
     </div>
 
     <div class="nav">
-      <router-link :to="{name: 'country_view'}">País</router-link>
+      <router-link :to="{name: 'lelegis_view'}">País</router-link>
       <router-link :to="{name: 'about'}">Regiões</router-link>
       <router-link :to="{name: 'about'}">Estados</router-link>
     </div>

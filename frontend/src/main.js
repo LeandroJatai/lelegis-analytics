@@ -4,10 +4,14 @@ import '@/scss/app.scss'
 import 'bootstrap'
 
 import Vue from 'vue'
+
 import Vuex from 'vuex'
+import VuexStore from './store'
+
 import BootstrapVue from 'bootstrap-vue'
 
-import VuexStore from './store'
+import VueChartkick from 'vue-chartkick'
+import Highcharts from 'highcharts'
 
 import axios from 'axios'
 
@@ -24,6 +28,7 @@ axios.defaults.xsrfHeaderName = 'X-CSRFToken'
 
 Vue.use(Vuex)
 Vue.use(BootstrapVue)
+Vue.use(VueChartkick, {adapter: Highcharts})
 
 loadProgressBar()
 
