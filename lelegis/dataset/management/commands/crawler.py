@@ -101,6 +101,9 @@ class Command(BaseCommand):
                     action=node.action_view
                 )
 
+                print('FAKE EXEC:', m_count, uri, ' - ', m.nome,)
+
+                return
                 print('GET:', m_count, uri, ' - ', m.nome,)
                 data = None
                 try:
@@ -175,7 +178,7 @@ class Command(BaseCommand):
 
             run(pesquisas)
 
-            sleep(3)
+            # sleep(3)
 
     def ping(self, url):
         try:
