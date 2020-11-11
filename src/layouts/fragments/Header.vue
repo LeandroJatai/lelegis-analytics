@@ -1,5 +1,5 @@
 <template>
-  <header :class="[scrollY === 0 ? 'topo-header1' : '']" >
+  <header :class="[scrollY === 0 ? 'header-top' : '']" >
     <div class="logo">
       <img alt="LeLegis Analytics" src="@/assets/logo.svg">
     </div>
@@ -21,13 +21,33 @@ export default {
   methods: {
     handleScroll (event) {
       this.scrollY = window.scrollY
+
+      const h = document.getElementsByTagName('header')[0]
+      if (window.scrollY === 0) {
+        h.classList.remove('header-mini')
+        // console.log('topo', window.scrollY)
+      } else if (window.scrollY > 220 && window.scrollY < 300) {
+        if (h.classList.contains('header-mini') || h.classList.contains('header-top')) {
+          h.classList.remove('header-top')
+          h.classList.remove('header-mini')
+        }
+        // console.log('meio', window.scrollY)
+      } else if (window.scrollY > 400) {
+        if (!h.classList.contains('header-mini')) {
+          h.classList.add('header-mini')
+          h.classList.remove('header-top')
+          // console.log('fim', window.scrollY)
+        }
+      } else {
+        // console.log('limbo', window.scrollY)
+      }
     }
   },
   created () {
-    window.addEventListener('scroll', this.handleScroll)
+    window.addEventListener('scroll', this.handleScroll, { passive: true })
   },
   destroyed () {
-    window.removeEventListener('scroll', this.handleScroll)
+    // window.removeEventListener('scroll', this.handleScroll)
   }
 }
 </script>
@@ -48,11 +68,11 @@ export default {
     & ~ main {
       transition: 0.5s all;
     }
-    &.topo-header ~ main {
+    &.header-top ~ main {
       transition: 0.5s all;
     }
 
-    &.topo-header {
+    &.header-top {
 
       position: relative;
       transition: 0.5s all;

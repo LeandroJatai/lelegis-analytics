@@ -4,9 +4,10 @@ import socket
 from time import sleep
 
 from django.core.management.base import BaseCommand
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Max
 from django.utils.text import slugify
 import urllib3
+from urllib3.util.timeout import Timeout
 
 from lelegis.dataset.models import Municipio, PesquisaNode, Action
 
@@ -15,11 +16,28 @@ class Command(BaseCommand):
     logger = logging.getLogger(__name__)
 
     def add_arguments(self, parser):
-        parser.add_argument('action', nargs='?', type=str, default=None)
+        parser.add_argument('action', nargs='?', type=str, default='new')
+        parser.add_argument('limit', nargs='?', type=str, default=0)
+
+        # action
+        # all, new, update_ping_true, update_ping_false
+
+        # all - executa todos os nós de pesquisa
+
+        # new - executa nós que nunca foram executados
+
+        # update_ping_true - reexecuta os actions já existentes com ping true
+        # update_ping_false - reexecuta os actions já existentes com ping false
+
+        # default: new
 
     def handle(self, *args, **options):
-        self.action = options['action']
-        """municipios = Municipio.objects.filter(
+
+        action = options['action']
+        limit = options['limit']
+
+        """
+        municipios = Municipio.objects.filter(
             nome__in=(
                 'Jataí',
                 'Formosa',
@@ -27,26 +45,23 @@ class Command(BaseCommand):
                 'Agudo',
                 'Piraí')
         ).order_by('nome')
-
         """
+
         municipios = Municipio.objects.annotate(
-            action_count=Count('action')).order_by('action_count', 'nome')
+            data_last_action=Max('action__data')
+        ).order_by('data_last_action')
 
-        primeiro = municipios.first()
-        municipios = municipios.filter(
-            action_count=primeiro.action_count)
-
-        print('tentativa', primeiro.action_count + 1,
-              ': Total a fazer', municipios.count())
-
-        if self.action == 'count':
-            return
+        if limit:
+            municipios = municipios[:limit]
 
         urllib3.disable_warnings()
-        http = urllib3.PoolManager(timeout=3.0)
-        m_count = 0
+
+        timeout = Timeout(connect=5.0, read=10.0)
+        http = urllib3.PoolManager(timeout=timeout)
+
         for m in municipios:
-            m_count += 1
+            print('....TEST:', m)
+
             if not m.domain:
                 domainmask = '{}.{}.leg.br'
 
@@ -69,6 +84,36 @@ class Command(BaseCommand):
                         run(n)
                     return
 
+                try:
+                    a = Action.objects.get(municipio=m, tipo=node)
+                except:
+                    a = Action()
+
+                if a.id:
+                    if action == 'new':
+
+                        if not a.ping and node.restritivo:
+                            return
+
+                        run(node.childs.all())
+                        return
+
+                    elif action == 'update_ping_false':
+
+                        if a.ping:
+                            run(node.childs.all())
+                            return
+
+                    elif action == 'update_ping_true':
+
+                        if not a.ping and not node.restritivo:
+                            run(node.childs.all())
+                            return
+
+                else:
+                    if action.startswith('update_ping'):
+                        return
+
                 if not protocolo:
                     errors = []
                     for p in node.protocolos.split(','):
@@ -83,7 +128,6 @@ class Command(BaseCommand):
                                 errors.append({p: str(e)})
                             pass
                     if errors:
-                        a = Action()
                         a.municipio = m
                         a.tipo = node
                         a.ping = False
@@ -94,6 +138,12 @@ class Command(BaseCommand):
                         run(node.childs.all())
                     return
 
+                print('GET:', m, node)
+
+                # return - exec fake
+                # print('exec fake')
+                # return
+
                 uri = '{protocolo}://{servico}.{dominio}/{action}'.format(
                     protocolo=protocolo,
                     servico=node._servico,
@@ -101,17 +151,12 @@ class Command(BaseCommand):
                     action=node.action_view
                 )
 
-                print('FAKE EXEC:', m_count, uri, ' - ', m.nome,)
-
-                return
-                print('GET:', m_count, uri, ' - ', m.nome,)
                 data = None
-                try:
 
+                try:
                     r = http.request('GET', uri)
 
                     if not node.tipo_response:
-                        a = Action()
                         a.municipio = m
                         a.tipo = node
                         a.ping = True
@@ -151,12 +196,12 @@ class Command(BaseCommand):
                     actions = capture.strip().split('__')
 
                     obj = jdata
-                    for a in actions:
-                        if a in funcs:
-                            obj = funcs[a](obj)
+                    for f in actions:
+                        if f in funcs:
+                            obj = funcs[f](obj)
                         else:
-                            obj = obj[a]
-                            json_result[a] = obj
+                            obj = obj[f]
+                            json_result[f] = obj
 
                 if not json_result:
                     json_result = {
@@ -169,16 +214,15 @@ class Command(BaseCommand):
                     'uri': uri,
                 })
 
-                a = Action()
                 a.municipio = m
                 a.tipo = node
                 a.ping = True
                 a.json = json_result
                 a.save()
 
-            run(pesquisas)
+                sleep(1)
 
-            # sleep(3)
+            run(pesquisas)
 
     def ping(self, url):
         try:

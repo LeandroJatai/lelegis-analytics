@@ -13,7 +13,7 @@ export default {
     Message
   },
   mounted: function () {
-    this.sendMessage({ alert: 'success', message: 'montou app', time: 5 })
+    // this.sendMessage({ alert: 'success', message: 'montou app', time: 5 })
   }
 }
 </script>

@@ -10,13 +10,12 @@
         <pie-chart :data="dataPais" :colors="colors"></pie-chart>
         <!--b-table :items="dataPaisTable" /-->
       </div>
-
-      <b-row v-for="(tc, key) in tipo_classificacao" :key="key+1">
-        <b-col md="6">
+      <b-row>
+        <b-col md="6" v-for="(tc, key) in tipo_classificacao" :key="key+1">
           <div class="bloco-view">
-            <h5 v-if="!pesquisa.action_view">Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.total}} Municípios acessíveis</h5>
-            <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries !== undefined">Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.has_entries}} Municípios com dados</h5>
-            <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries === undefined">Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.total}} Municípios com dados</h5>
+            <h5 v-if="!pesquisa.action_view">Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.total}} registros acessíveis</h5>
+            <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries !== undefined">Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.has_entries}} registros</h5>
+            <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries === undefined">Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.total}} registros</h5>
             <small>{{pesquisa.title}}</small>
 
             <br><small><small>{{pesquisa.description}}</small></small>
@@ -24,21 +23,23 @@
             <pie-chart :data="getData('ping_true', tc.type)" :colors="colors"></pie-chart>
           </div>
         </b-col>
-        <b-col md="6">
-          <div class="bloco-view">
-            <h5 v-if="!pesquisa.action_view">a - Resumo por {{tc.descr}} dos {{pesquisa.ping_false.pais.total}} Municípios sem resposta</h5>
-            <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries !== undefined">b - Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.total - pesquisa.ping_true.pais.has_entries}} Municípios sem dados</h5>
-            <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries === undefined">c - Resumo por {{tc.descr}} dos {{pesquisa.ping_false.pais.total}} Municípios sem dados</h5>
-            <small>{{pesquisa.title}}</small>
-            <br><small><small>{{pesquisa.description}}</small></small>
-            <br><small><small>/{{pesquisa.action_view}}</small></small>
-            <pie-chart :data="getData('ping_false', tc.type)" :colors="colors"></pie-chart>
-          </div>
-        </b-col>
+        <template v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries !== undefined && pesquisa.ping_true.pais.total >= pesquisa.ping_true.pais.has_entries">
+          <b-col md="6"  v-for="(tc, key) in tipo_classificacao" :key="key+1">
+            <div class="bloco-view">
+              <h5 v-if="!pesquisa.action_view">Resumo por {{tc.descr}} dos {{pesquisa.ping_false.pais.total}} registros sem resposta</h5>
+              <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries !== undefined">Resumo por {{tc.descr}} dos {{pesquisa.ping_true.pais.total - pesquisa.ping_true.pais.has_entries}} registros sem dados</h5>
+              <h5 v-if="pesquisa.action_view && pesquisa.ping_true.pais.has_entries === undefined">Resumo por {{tc.descr}} dos {{pesquisa.ping_false.pais.total}} registros sem dados</h5>
+              <small>{{pesquisa.title}}</small>
+              <br><small><small>{{pesquisa.description}}</small></small>
+              <br><small><small>/{{pesquisa.action_view}}</small></small>
+              <pie-chart :data="getData('ping_false', tc.type)" :colors="colors"></pie-chart>
+            </div>
+          </b-col>
+        </template>
       </b-row>
     </div>
 
-    <ResumoPais :pesquisa="item"  v-for="(item, key) in childs" :key="key+1"></ResumoPais>
+    <ResumoGraficoRecursive :pesquisa="item"  v-for="(item, key) in childs" :key="key+1"></ResumoGraficoRecursive>
 
   </div>
 </template>
@@ -46,7 +47,7 @@
 import Resources from '@/resources'
 
 export default {
-  name: 'ResumoPais',
+  name: 'ResumoGraficoRecursive',
   props: ['pesquisa'],
   data () {
     return {
@@ -85,7 +86,7 @@ export default {
         dados.push(['Sem Acesso = ' + this.pesquisa.ping_false.pais.total, this.pesquisa.ping_false.pais.total])
       } else {
         if (this.pesquisa.ping_true.pais.has_entries !== undefined) {
-          dados.push(['Com Dados = ' + this.pesquisa.ping_true.pais.has_entries, this.pesquisa.ping_true.pais.has_entries])
+          dados.push([`Com Dados = ${this.pesquisa.ping_true.pais.has_entries} (${this.pesquisa.ping_true.pais.size_entries})`, this.pesquisa.ping_true.pais.has_entries])
           dados.push(['Sem Dados = ' + (this.pesquisa.ping_true.pais.total - this.pesquisa.ping_true.pais.has_entries), (this.pesquisa.ping_true.pais.total - this.pesquisa.ping_true.pais.has_entries)])
           dados.push(['Erro = ' + (this.pesquisa.ping_false.pais.total), this.pesquisa.ping_false.pais.total])
         } else {
@@ -105,8 +106,6 @@ export default {
 
       const lista_de_analise = t.pesquisa.action_view && t.pesquisa.ping_true.pais.has_entries !== undefined ? t.pesquisa.ping_true : t.pesquisa[tipo_ping]
 
-      const loglog = [tipo_ping, tipo_classificacao, t.pesquisa.action_view]
-      console.log(loglog)
       _.each(lista_de_analise[tipo_classificacao], function (value) {
         if (t.pesquisa.action_view === '' || value.has_entries === undefined) {
           dados.push([value.meta + ' = ' + value.total, value.total])
@@ -118,7 +117,7 @@ export default {
         } else {
           if (value.has_entries !== undefined) {
             if (tipo_ping === 'ping_true') {
-              dados.push([value.meta + ' = ' + value.has_entries, value.has_entries])
+              dados.push([`${value.meta} - ${value.has_entries} (${value.size_entries})`, value.has_entries])
             } else {
               dados.push([value.meta + ' = ' + (value.total - value.has_entries), value.total - value.has_entries])
             }

@@ -4,7 +4,7 @@
       <b-container fluid>
         <b-row>
           <b-col md="12" v-for="(item, key) in pesquisas" :key="key+1">
-            <ResumoPais :pesquisa="item"></ResumoPais>
+            <ResumoGraficoRecursive :pesquisa="item"></ResumoGraficoRecursive>
           </b-col>
         </b-row>
       </b-container>
@@ -22,12 +22,12 @@
 // @ is an alias to /src
 
 import Resources from '@/resources'
-import ResumoPais from '@/components/ResumoPais'
+import ResumoGraficoRecursive from '@/components/ResumoGraficoRecursive'
 
 export default {
   name: 'ResumoGraficoView',
   components: {
-    ResumoPais
+    ResumoGraficoRecursive
   },
   data () {
     return {

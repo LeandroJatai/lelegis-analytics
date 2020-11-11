@@ -60,7 +60,11 @@ class PingMixin(serializers.Serializer):
                 fbp = fbp.filter(
                     json__pagination__total_entries__gt=0
                 )
+                soma = 0
+                for v in fbp:
+                    soma += v.json['pagination']['total_entries']
                 rr['has_entries'] = fbp.count()
+                rr['size_entries'] = soma
             else:
                 params['json__has_key'] = 'results'
                 params['json__results__isnull'] = False

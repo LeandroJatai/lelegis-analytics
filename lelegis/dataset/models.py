@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.deletion import PROTECT
+from django.db.models.deletion import PROTECT, CASCADE
 from django.db.models.fields import URLField
 from django.db.models.fields.json import JSONField
 from django.db.models.fields.related import ForeignKey
@@ -115,14 +115,13 @@ class PesquisaNode(models.Model):
 
 
 class Action(models.Model):
-    municipio = ForeignKey(Municipio, on_delete=PROTECT)
+    municipio = ForeignKey(Municipio, on_delete=CASCADE)
 
     tipo = models.ForeignKey(
         PesquisaNode, on_delete=PROTECT)
 
     data = models.DateTimeField(
-        verbose_name=_('Data de Teste'),
-        editable=False, auto_now_add=True)
+        verbose_name=_('Data de Teste'), editable=False, auto_now=True)
 
     ping = models.BooleanField(
         default=False,
