@@ -1,4 +1,5 @@
 
+from lelegis.dataset.models import Municipio, PesquisaNode, Action
 from lelegis.rules import (RP_ADD, RP_CHANGE, RP_DELETE, RP_DETAIL, RP_LIST,
                            GROUP_ANONYMOUS, GROUP_LOGIN_SOCIAL)
 
@@ -19,7 +20,11 @@ rules_group_anonymous = {
 
 rules_group_login_social = {
     'group': GROUP_LOGIN_SOCIAL,
-    'rules': []
+    'rules': [
+        (Municipio, [], __perms_publicas__),
+        (PesquisaNode, [], __perms_publicas__),
+        (Action, [], __perms_publicas__)
+    ]
 }
 
 rules_patterns = [

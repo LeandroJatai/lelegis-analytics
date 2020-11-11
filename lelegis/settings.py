@@ -37,8 +37,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'webpack_loader',
+    'django_extensions',
+
+
+    'rest_framework',
+    #'rest_framework.authtoken',
+    'django_filters',
 
     'lelegis.core',
+    'lelegis.dataset',
     'lelegis.rules'
 ]
 
@@ -53,6 +60,24 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'lelegis.urls'
+
+REST_FRAMEWORK = {
+    "UNICODE_JSON": False,
+    "DEFAULT_PARSER_CLASSES": (
+        "rest_framework.parsers.JSONParser",
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "lelegis.api.pagination.StandardPagination",
+    "DEFAULT_FILTER_BACKENDS": (
+        "rest_framework.filters.SearchFilter",
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+}
 
 TEMPLATES = [
     {

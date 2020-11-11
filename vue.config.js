@@ -108,7 +108,7 @@ module.exports = {
         path.join(__dirname, 'src', 'assets')
       ])
 
-    /* config
+    config
       .plugin('provide')
       .use(require('webpack/lib/ProvidePlugin'), [{
         $: 'jquery',
@@ -116,7 +116,7 @@ module.exports = {
         'window.jQuery': 'jquery',
         jQuery: 'jquery',
         _: 'lodash'
-      }]) */
+      }])
   },
 
   pwa: {

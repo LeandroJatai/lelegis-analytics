@@ -4,10 +4,13 @@ dj-database-url
 python-decouple
 django-webpack4-loader
 unipath
-
+urllib3
 easy-thumbnails
 django-image-cropping
+django-extensions
 
+djangorestframework
+django-filter
 
 #django-crispy-forms==1.7.2
 #django-floppyforms==1.7.0
@@ -16,7 +19,6 @@ django-image-cropping
 #
 #pytz==2020.1
 #urllib3
-#django-extensions==2.2.9##
 
 #drf-yasg==1.13.0
 #djangorestframework==3.9.0
