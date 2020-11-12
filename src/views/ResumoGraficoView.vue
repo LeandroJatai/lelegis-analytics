@@ -65,7 +65,9 @@ export default {
 
 <style lang="sass">
 
-.lelegis-view
+.resumo-grafico-view
+  text-align: center
+
   .empty-list
     padding: 2rem 1rem
 

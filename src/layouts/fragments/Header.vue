@@ -3,8 +3,8 @@
     <div class="logo">
       <img alt="LeLegis Analytics" src="@/assets/logo.svg">
     </div>
-
     <div class="nav">
+      <router-link :to="{name: 'resumo_grafico_view'}">Consultas</router-link>
       <router-link :to="{name: 'resumo_grafico_view'}">Resumo Gráfico</router-link>
     </div>
 
@@ -54,16 +54,67 @@ export default {
 <style lang="scss">
   $heightHeader: 120px;
   header {
-    transition: 0.5s all;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
     background-color: white;
     border-bottom: 1px solid #aaa;
+    box-shadow: 1px 1px 10px #aaa;
 
-    display: grid;
+    &, * {
+    transition: all  0.5s ease;
+    }
 
-    width: 100%;
-    top: 0;
-    grid-template-columns: 1fr 2fr;
-    grid-template-rows: $heightHeader;
+    .logo {
+      flex: 1 1 0%;
+      padding: 2rem;
+      text-align: center;
+      img {
+        height: $heightHeader;
+
+      }
+
+    }
+    .nav {
+      flex: 1 1 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      a {
+        display: inline-block;
+        padding: 1rem;
+        font-weight: bold;
+        font-size: 120%;
+        color: #2c3e50;
+        &.router-link-exact-active {
+          color: #42b983;
+        }
+      }
+    }
+
+    &.header-mini {
+      .logo {
+        padding: 1rem;
+        img {
+          height: $heightHeader * 0.6;
+        }
+      }
+    }
+
+    &.header-top {
+      flex-direction: column;
+      box-shadow: 0 0 0 0;
+      img {
+        height: $heightHeader * 1.4;
+      }
+    }
+  }
+
+  .aaa {
+
+    display: flex;
 
     & ~ main {
       transition: 0.5s all;
@@ -72,14 +123,15 @@ export default {
       transition: 0.5s all;
     }
 
+    &.header-mini {
+
+    }
+
     &.header-top {
 
-      position: relative;
       transition: 0.5s all;
       padding: $heightHeader * 0.2 $heightHeader * 0.2 0;
 
-      grid-template-columns: auto;
-      grid-template-rows: $heightHeader * 1.5 auto;
       .nav {
         justify-content: center;
         a {
@@ -98,29 +150,9 @@ export default {
 
     .nav {
       display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: left;
-      a {
-        padding: 0 1rem;
-        font-weight: bold;
-        font-size: 120%;
-        color: #2c3e50;
-        &.router-link-exact-active {
-          color: #42b983;
-        }
-      }
     }
   }
 
 @media screen and (max-width: 767px) {
-  header {
-    .logo {
-      img {
-        padding: 20px 10px;
-      }
-    }
-  }
-
 }
 </style>
