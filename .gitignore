@@ -1,7 +1,9 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__
+*/__pycache__/*
 *.py[cod]
 *$py.class
+*.pyc
 
 # C extensions
 *.so
@@ -86,7 +88,7 @@ client_secrets.json
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
+:wq*.sln
 
 # specific to this project
 collected_static
