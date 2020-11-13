@@ -12,6 +12,13 @@ django-extensions
 djangorestframework
 django-filter
 
+
+
+gunicorn==20.0.4
+
+
+
+
 #django-crispy-forms==1.7.2
 #django-floppyforms==1.7.0
 #django-extra-views==0.12.0
