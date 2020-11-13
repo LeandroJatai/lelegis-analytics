@@ -92,8 +92,19 @@ class Command(BaseCommand):
                 if a.id:
                     if action == 'new':
 
-                        if not a.ping and node.restritivo:
+                        if not a.ping and node.ping_restritivo:
                             return
+
+                        if node.result_restritivo:
+                            try:
+                                if a.json['pagination']['total_entries'] == 0:
+                                    return
+                            except:
+                                try:
+                                    if len(a.json['results']) == 0:
+                                        return
+                                except:
+                                    pass
 
                         run(node.childs.all())
                         return
@@ -106,7 +117,7 @@ class Command(BaseCommand):
 
                     elif action == 'update_ping_true':
 
-                        if not a.ping and not node.restritivo:
+                        if not a.ping and not node.ping_restritivo:
                             run(node.childs.all())
                             return
 
@@ -118,7 +129,7 @@ class Command(BaseCommand):
                     errors = []
                     for p in node.protocolos.split(','):
                         try:
-                            run(node, p.strip())
+                            ag = run(node, p.strip())
                             errors = []
                             break
                         except Exception as e:
@@ -134,7 +145,18 @@ class Command(BaseCommand):
                         a.json = errors
                         a.save()
 
-                    if not node.restritivo or node.restritivo and not errors:
+                    if not node.ping_restritivo or node.ping_restritivo and not errors:
+                        if node.result_restritivo and ag.ping:
+                            try:
+                                if ag.json['pagination']['total_entries'] == 0:
+                                    return
+                            except:
+                                try:
+                                    if len(ag.json['results']) == 0:
+                                        return
+                                except:
+                                    pass
+
                         run(node.childs.all())
                     return
 
@@ -221,6 +243,8 @@ class Command(BaseCommand):
                 a.save()
 
                 sleep(1)
+
+                return a
 
             run(pesquisas)
 

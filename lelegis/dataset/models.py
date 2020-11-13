@@ -95,10 +95,15 @@ class PesquisaNode(models.Model):
 
     protocolos = models.CharField(max_length=30, default='https, http')
 
-    restritivo = models.BooleanField(
+    ping_restritivo = models.BooleanField(
         default=False,
         choices=YES_NO_CHOICES,
-        verbose_name=_('Restrige aprofundamento da árvore em caso de erro'))
+        verbose_name=_('Restringe aprofundamento da árvore em caso de erro'))
+
+    result_restritivo = models.BooleanField(
+        default=False,
+        choices=YES_NO_CHOICES,
+        verbose_name=_('Restringe aprofundamento da árvore em caso de erro'))
 
     tipo_response = models.CharField(max_length=1000, default='', blank=True)
     description = models.TextField(blank=True, default='')

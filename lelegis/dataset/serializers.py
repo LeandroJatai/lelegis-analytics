@@ -31,7 +31,7 @@ class ActionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class PingMixin(serializers.Serializer):
+class ExecSerializer(serializers.Serializer):
 
     pais = serializers.SerializerMethodField()
     regional = serializers.SerializerMethodField()
@@ -39,36 +39,48 @@ class PingMixin(serializers.Serializer):
 
     def exec_choice(self, obj, params={}, sigla=None, meta=None):
 
-        fb = obj.action_set.filter(ping=self.ping, **params)
+        qs = obj.action_set.filter(**params)
 
         rr = {
-            'total': fb.count(),
+            'ping_true': {
+                'has_entries': qs.filter(ping=True).count(),
+                'count': qs.filter(ping=True).count(),
+                'sigla': sigla,
+                'meta': meta
+            },
+            'ping_false': {
+                'has_entries': qs.filter(ping=False).count(),
+                'count': qs.filter(ping=False).count(),
+                'sigla': sigla,
+                'meta': meta
+            }
         }
 
-        if sigla:
-            rr['sigla'] = sigla
-
-        if meta:
-            rr['meta'] = meta
-
-        if self.ping and obj.action_view:
-
-            fbp = fb.filter(
+        if obj.action_view:
+            qs = qs.filter(ping=True)
+            qss = qs.filter(
                 json__has_key='pagination')
 
-            if fbp.exists():
-                fbp = fbp.filter(
+            if qss.exists():
+                qss = qss.filter(
                     json__pagination__total_entries__gt=0
                 )
                 soma = 0
-                for v in fbp:
+                for v in qss:
                     soma += v.json['pagination']['total_entries']
-                rr['has_entries'] = fbp.count()
-                rr['size_entries'] = soma
+                rr['ping_true']['has_entries'] = qss.count()
+                rr['ping_true']['size_entries'] = soma
             else:
                 params['json__has_key'] = 'results'
                 params['json__results__isnull'] = False
-                rr['results'] = fb.filter(**params).count()
+
+                rr['ping_true']['has_entries'] = qs.filter(**params).count()
+
+                soma = 0
+                for v in qs.filter(**params):
+                    soma += len(v.json['results'])
+
+                rr['ping_true']['size_entries'] = soma
                 # if not rr['results']:
                 #    rr['has_entries'] = fbp.count()
 
@@ -88,17 +100,8 @@ class PingMixin(serializers.Serializer):
             yield self.exec_choice(obj, params, uf[0], uf[1])
 
 
-class PingTrueSerializer(PingMixin):
-    ping = True
-
-
-class PingFalseSerializer(PingMixin):
-    ping = False
-
-
 class PesquisaSerializer(serializers.ModelSerializer):
-    ping_true = serializers.SerializerMethodField()
-    ping_false = serializers.SerializerMethodField()
+    EXEC = serializers.SerializerMethodField()
 
     childs = PrimaryKeyRelatedField(read_only=True, many=True)
     #action_set = ActionSerializer(many=True)
@@ -107,10 +110,5 @@ class PesquisaSerializer(serializers.ModelSerializer):
         model = PesquisaNode
         fields = '__all__'
 
-    def get_ping_true(self, obj):
-        data = PingTrueSerializer(obj).data
-        return data
-
-    def get_ping_false(self, obj):
-        data = PingFalseSerializer(obj).data
-        return data
+    def get_EXEC(self, obj):
+        return ExecSerializer(obj).data

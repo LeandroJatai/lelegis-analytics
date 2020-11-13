@@ -4,7 +4,7 @@
       <b-container fluid>
         <b-row>
           <b-col md="12" v-for="(item, key) in pesquisas" :key="key+1">
-            <ResumoGraficoRecursive :pesquisa="item"></ResumoGraficoRecursive>
+            <ResumoGraficoRecursive :pesquisa="item" :pesquisa_parent="null"></ResumoGraficoRecursive>
           </b-col>
         </b-row>
       </b-container>
