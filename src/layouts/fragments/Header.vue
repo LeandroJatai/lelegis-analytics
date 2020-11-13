@@ -4,7 +4,7 @@
       <img alt="LeLegis Analytics" src="@/assets/logo.svg">
     </div>
     <div class="nav">
-      <router-link :to="{name: 'resumo_grafico_view'}">Consultas</router-link>
+      <router-link :to="{name: 'pesquisa_view'}">Pesquisa</router-link>
       <router-link :to="{name: 'resumo_grafico_view'}">Resumo Gráfico</router-link>
     </div>
 
