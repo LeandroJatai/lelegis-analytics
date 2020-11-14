@@ -44,10 +44,16 @@ INSTALLED_APPS = [
     #'rest_framework.authtoken',
     'django_filters',
 
+
+    'lelegis.api',
+]
+
+APPS_PROJECT = [
     'lelegis.core',
     'lelegis.dataset',
     'lelegis.rules'
 ]
+INSTALLED_APPS = INSTALLED_APPS + APPS_PROJECT
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -151,6 +157,11 @@ DATE_INPUT_FORMATS = ('%d/%m/%Y', '%m-%d-%Y', '%Y-%m-%d')
 
 STATIC_URL = '/static/'
 STATIC_ROOT = PROJECT_DIR.child("collected_static")
+
+STATICFILES_DIRS = (
+    # BASE_DIR.child('static'),
+    PROJECT_DIR.child('dist'),
+)
 
 WEBPACK_LOADER = {
     'DEFAULT': {

@@ -1,15 +1,13 @@
-from django.contrib.postgres.fields.jsonb import JSONField
 from django.db.models.fields.files import FileField
+from django.db.models.fields.json import JSONField
 from django.template.defaultfilters import capfirst
 import django_filters
 from django_filters.filters import CharFilter, NumberFilter
 from django_filters.rest_framework.filterset import FilterSet
 from django_filters.utils import resolve_field
 
-from sapl.sessao.models import SessaoPlenaria
 
-
-class SaplFilterSetMixin(FilterSet):
+class FilterSetMixin(FilterSet):
 
     o = CharFilter(method='filter_o')
 
@@ -56,19 +54,3 @@ class SaplFilterSetMixin(FilterSet):
         if filter_class is not None:
             return filter_class(**default)
         return None
-
-
-class SessaoPlenariaFilterSet(SaplFilterSetMixin):
-    year = NumberFilter(method='filter_year')
-    month = NumberFilter(method='filter_month')
-
-    class Meta(SaplFilterSetMixin.Meta):
-        model = SessaoPlenaria
-
-    def filter_year(self, queryset, name, value):
-        qs = queryset.filter(data_inicio__year=value)
-        return qs
-
-    def filter_month(self, queryset, name, value):
-        qs = queryset.filter(data_inicio__month=value)
-        return qs

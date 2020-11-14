@@ -103,7 +103,7 @@ class PesquisaNode(models.Model):
     result_restritivo = models.BooleanField(
         default=False,
         choices=YES_NO_CHOICES,
-        verbose_name=_('Restringe aprofundamento da árvore em caso de erro'))
+        verbose_name=_('Restringe aprofundamento da árvore se result vazio'))
 
     tipo_response = models.CharField(max_length=1000, default='', blank=True)
     description = models.TextField(blank=True, default='')
@@ -136,3 +136,18 @@ class Action(models.Model):
     json = JSONField(default=dict)
 
     domain = URLField(default='')
+
+    parent = models.ForeignKey(
+        'self',
+        blank=True, null=True, default=None,
+        related_name='childs',
+        verbose_name=_('Parent'),
+        on_delete=PROTECT)
+
+    def is_my_parent(self, uri):
+        if self.json and 'uri' in self.json and self.json['uri'] == uri:
+            return True
+        if not self.parent:
+            return False
+
+        return self.parent.is_my_parent(uri)

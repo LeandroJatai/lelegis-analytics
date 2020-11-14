@@ -77,7 +77,84 @@ class Command(BaseCommand):
 
             pesquisas = PesquisaNode.objects.filter(parent__isnull=True)
 
+            global count_point
+            count_point = 0
+
             def run(node, protocolo=None):
+                global count_point
+
+                def run_subaction(node, action_parent):
+                    global count_point
+                    count_point = count_point + 1
+                    if count_point % 50 == 0:
+                        print('')
+                    print('.', end="")
+                    ap = action_parent
+
+                    if not ap.json or 'results' not in ap.json:
+                        return
+
+                    if not isinstance(ap.json['results'], list):
+                        return
+
+                    for rs in ap.json['results']:
+
+                        if 'uri' not in rs:
+                            continue
+
+                        uri = rs['uri']
+
+                        if ap.is_my_parent(uri):
+                            continue
+
+                        ac = Action.objects.filter(
+                            municipio=m,
+                            tipo=node,
+                            parent=ap,
+                            json__uri=uri)
+
+                        if ac.exists():
+                            ac = ac.first()
+                        else:
+                            ac = Action()
+
+                        ac.ping = True
+
+                        try:
+                            r = http.request('GET', uri)
+                        except Exception as e:
+                            ac.ping = False
+
+                        if ac.ping:
+                            try:
+                                data = r.data.decode('utf-8')
+                            except Exception as e:
+                                ac.ping = False
+
+                        jdata = {}
+                        if ac.ping:
+                            try:
+                                jdata = json.loads(data)
+                            except Exception as e:
+                                ac.ping = False
+
+                        json_result = {
+                            'status': r.status,
+                            'reason': r.reason,
+                            'uri': uri,
+                            'results': jdata or data
+                        }
+
+                        ac.municipio = m
+                        ac.tipo = node
+                        ac.json = json_result
+                        ac.parent = ap
+                        ac.save()
+
+                        if count_point % 10 == 0:
+                            sleep(5)
+
+                        run_subaction(node, ac)
 
                 if not isinstance(node, PesquisaNode):
                     for n in node:
@@ -85,13 +162,12 @@ class Command(BaseCommand):
                     return
 
                 try:
-                    a = Action.objects.get(municipio=m, tipo=node)
+                    a = Action.objects.get(municipio=m, tipo=node, parent=None)
                 except:
                     a = Action()
 
                 if a.id:
                     if action == 'new':
-
                         if not a.ping and node.ping_restritivo:
                             return
 
@@ -103,6 +179,13 @@ class Command(BaseCommand):
                                 try:
                                     if len(a.json['results']) == 0:
                                         return
+
+                                    print('GET:', m, node, a.json['uri'])
+
+                                    count_point = 0
+                                    run_subaction(node, a)
+                                    print('')
+
                                 except:
                                     pass
 
@@ -154,6 +237,12 @@ class Command(BaseCommand):
                                 try:
                                     if len(ag.json['results']) == 0:
                                         return
+
+                                    print('GET:', m, node, a.json['uri'])
+                                    count_point = 0
+                                    run_subaction(node, ag)
+                                    print('')
+
                                 except:
                                     pass
 

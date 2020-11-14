@@ -1,73 +1,88 @@
-from django.conf import settings
-from django.urls.base import reverse
+
 from rest_framework import serializers
-from rest_framework.relations import StringRelatedField
+from rest_framework.relations import PrimaryKeyRelatedField
 
-from sapl.base.models import Autor, CasaLegislativa
-from sapl.protocoloadm.models import DocumentoAdministrativo
-from sapl.sessao.models import SessaoPlenaria
+from lelegis.dataset.models import PesquisaNode, UF, Municipio
 
 
-class IntRelatedField(StringRelatedField):
-    def to_representation(self, value):
-        return int(value)
+class ExecSerializer(serializers.Serializer):
+
+    pais = serializers.SerializerMethodField()
+    regional = serializers.SerializerMethodField()
+    estadual = serializers.SerializerMethodField()
+
+    def exec_choice(self, obj, params={}, sigla=None, meta=None):
+
+        qs = obj.action_set.filter(**params).filter(parent__isnull=True)
+
+        rr = {
+            'ping_true': {
+                'has_entries': qs.filter(ping=True).count(),
+                'count': qs.filter(ping=True).count(),
+                'sigla': sigla,
+                'meta': meta
+            },
+            'ping_false': {
+                'has_entries': qs.filter(ping=False).count(),
+                'count': qs.filter(ping=False).count(),
+                'sigla': sigla,
+                'meta': meta
+            }
+        }
+
+        if obj.action_view:
+            qs = qs.filter(ping=True)
+            qss = qs.filter(
+                json__has_key='pagination')
+
+            if qss.exists():
+                qss = qss.filter(
+                    json__pagination__total_entries__gt=0
+                )
+                soma = 0
+                for v in qss:
+                    soma += v.json['pagination']['total_entries']
+                rr['ping_true']['has_entries'] = qss.count()
+                rr['ping_true']['size_entries'] = soma
+            else:
+                params['json__has_key'] = 'results'
+                params['json__results__isnull'] = False
+
+                rr['ping_true']['has_entries'] = qs.filter(**params).count()
+
+                soma = 0
+                for v in qs.filter(**params):
+                    soma += len(v.json['results'])
+
+                rr['ping_true']['size_entries'] = soma
+                # if not rr['results']:
+                #    rr['has_entries'] = fbp.count()
+
+        return rr
+
+    def get_pais(self, obj):
+        return self.exec_choice(obj, params={})
+
+    def get_regional(self, obj):
+        for regiao in Municipio.REGIAO_CHOICES:
+            params = {'municipio__regiao': regiao[0]}
+            yield self.exec_choice(obj, params, regiao[0], regiao[1])
+
+    def get_estadual(self, obj):
+        for uf in UF:
+            params = {'municipio__uf': uf[0]}
+            yield self.exec_choice(obj, params, uf[0], uf[1])
 
 
-class ChoiceSerializer(serializers.Serializer):
-    value = serializers.SerializerMethodField()
-    text = serializers.SerializerMethodField()
+class PesquisaNodeSerializer(serializers.ModelSerializer):
+    EXEC = serializers.SerializerMethodField()
 
-    def get_text(self, obj):
-        return obj[1]
-
-    def get_value(self, obj):
-        return obj[0]
-
-
-class ModelChoiceSerializer(ChoiceSerializer):
-
-    def get_text(self, obj):
-        return str(obj)
-
-    def get_value(self, obj):
-        return obj.id
-
-
-class ModelChoiceObjectRelatedField(serializers.RelatedField):
-
-    def to_representation(self, value):
-        return ModelChoiceSerializer(value).data
-
-
-class AutorSerializer(serializers.ModelSerializer):
-    # AutorSerializer sendo utilizado pelo gerador automático da api devidos aos
-    # critérios anotados em views.py
-
-    autor_related = ModelChoiceObjectRelatedField(read_only=True)
+    childs = PrimaryKeyRelatedField(read_only=True, many=True)
+    #action_set = ActionSerializer(many=True)
 
     class Meta:
-        model = Autor
+        model = PesquisaNode
         fields = '__all__'
 
-
-class CasaLegislativaSerializer(serializers.ModelSerializer):
-    version = serializers.SerializerMethodField()
-
-    def get_version(self, obj):
-        return settings.PORTALCMJ_VERSION
-
-    class Meta:
-        model = CasaLegislativa
-        fields = '__all__'
-
-
-class SessaoPlenariaSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = SessaoPlenaria
-        """fields = list(
-            map(
-                lambda x: x.name,
-                SessaoPlenaria._meta.get_fields()
-            )
-        ) + ['legislatura']"""
+    def get_EXEC(self, obj):
+        return ExecSerializer(obj).data

@@ -15,7 +15,7 @@ export default {
       method: 'GET'
     }),
     getPesquisa: (id = '') => axios({
-      url: `${basePath}/pesquisa/${id}`,
+      url: `${basePath}/dataset/pesquisanode/${id}`,
       method: 'GET'
     })
   }
