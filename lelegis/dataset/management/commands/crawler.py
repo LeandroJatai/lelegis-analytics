@@ -7,6 +7,7 @@ from time import sleep
 
 from django.core.management.base import BaseCommand
 from django.db.models.aggregates import Count, Max
+from django.utils import timezone
 from django.utils.text import slugify
 import urllib3
 from urllib3.util.timeout import Timeout
@@ -19,7 +20,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('action', nargs='?', type=str, default='new')
-        parser.add_argument('limit', nargs='?', type=str, default=0)
+        parser.add_argument('limit', nargs='?', type=int, default=0)
 
         # action
         # all, new, update_ping_true, update_ping_false
@@ -52,9 +53,19 @@ class Command(BaseCommand):
 
         return False
 
+        self.start_time = timezone.localtime()
+
     def handle(self, *args, **options):
         if self.is_running():
             return
+
+        self.start_time = timezone.localtime()
+
+        self.crawler(*args, **options)
+
+        print('Start', self.start_time, 'Stop:', timezone.localtime())
+
+    def crawler(self, *args, **options):
 
         action = options['action']
         limit = options['limit']
@@ -84,6 +95,7 @@ class Command(BaseCommand):
 
         global count_point
         count_point = 0
+
         for m in municipios:
 
             if limit and count_point > limit:
