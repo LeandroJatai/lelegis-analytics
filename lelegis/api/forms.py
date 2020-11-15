@@ -2,9 +2,33 @@ from django.db.models.fields.files import FileField
 from django.db.models.fields.json import JSONField
 from django.template.defaultfilters import capfirst
 import django_filters
+from django_filters.constants import EMPTY_VALUES
 from django_filters.filters import CharFilter, NumberFilter
 from django_filters.rest_framework.filterset import FilterSet
 from django_filters.utils import resolve_field
+
+
+class JsonFilter(django_filters.Filter):
+
+    def filter(self, qs, value):
+        if value in EMPTY_VALUES:
+            return qs
+        if self.distinct:
+            qs = qs.distinct()
+
+        params = dict(
+            map(
+                lambda x: x.split('='),
+                map(
+                    lambda x: f'{self.field_name}__{x}',
+                    map(
+                        str.strip, value.split(',')
+                    )
+                )
+            )
+        )
+
+        return qs.filter(**params)
 
 
 class FilterSetMixin(FilterSet):
@@ -21,10 +45,7 @@ class FilterSetMixin(FilterSet):
                 },
             },
             JSONField: {
-                'filter_class': django_filters.CharFilter,
-                'extra': lambda f: {
-                    'lookup_expr': 'exact',
-                },
+                'filter_class': JsonFilter,
             },
 
         }
