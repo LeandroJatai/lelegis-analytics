@@ -1,6 +1,8 @@
 import json
 import logging
+import os
 import socket
+import subprocess
 from time import sleep
 
 from django.core.management.base import BaseCommand
@@ -30,8 +32,29 @@ class Command(BaseCommand):
         # update_ping_false - reexecuta os actions já existentes com ping false
 
         # default: new
+    def is_running(self):
+        process = subprocess.Popen(
+            ['ps', '-eo', 'pid,args'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        mypid = str(os.getpid())
+        stdout, notused = process.communicate()
+        for line in stdout.splitlines():
+            line = line.decode("utf-8")
+            pid, cmdline = line.strip().split(' ', 1)
+
+            if pid == mypid:
+                continue
+
+            if 'manage.py crawler' in cmdline:
+                return True
+
+        return False
 
     def handle(self, *args, **options):
+        if self.is_running():
+            return
 
         action = options['action']
         limit = options['limit']
@@ -51,15 +74,21 @@ class Command(BaseCommand):
             data_last_action=Max('action__data')
         ).order_by('data_last_action')
 
-        if limit:
-            municipios = municipios[:limit]
+        # if limit:
+        #    municipios = municipios[:limit]
 
         urllib3.disable_warnings()
 
         timeout = Timeout(connect=5.0, read=10.0)
         http = urllib3.PoolManager(timeout=timeout)
 
+        global count_point
+        count_point = 0
         for m in municipios:
+
+            if limit and count_point > limit:
+                return
+
             print('....TEST:', m)
 
             if not m.domain:
@@ -76,9 +105,6 @@ class Command(BaseCommand):
                 m.save()
 
             pesquisas = PesquisaNode.objects.filter(parent__isnull=True)
-
-            global count_point
-            count_point = 0
 
             def run(node, protocolo=None):
                 global count_point
@@ -154,7 +180,8 @@ class Command(BaseCommand):
                         if count_point % 10 == 0:
                             sleep(5)
 
-                        run_subaction(node, ac)
+                        if ac.ping:
+                            run_subaction(node, ac)
 
                 if not isinstance(node, PesquisaNode):
                     for n in node:
@@ -182,7 +209,6 @@ class Command(BaseCommand):
 
                                     print('GET:', m, node, a.json['uri'])
 
-                                    count_point = 0
                                     run_subaction(node, a)
                                     print('')
 
@@ -239,7 +265,7 @@ class Command(BaseCommand):
                                         return
 
                                     print('GET:', m, node, a.json['uri'])
-                                    count_point = 0
+
                                     run_subaction(node, ag)
                                     print('')
 
