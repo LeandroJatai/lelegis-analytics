@@ -97,13 +97,16 @@ class ApiViewSetConstrutor():
                         if not hasattr(_meta_serializer, 'model'):
                             model = _model
 
-                        if not hasattr(_meta_serializer, 'fields'):
-                            fields = '__all__'
-                        elif _meta_serializer.fields != '__all__':
-                            fields = list(
-                                _meta_serializer.fields) + ['__str__', ]
+                        if hasattr(_meta_serializer, 'exclude'):
+                            exclude = _meta_serializer.exclude
                         else:
-                            fields = _meta_serializer.fields
+                            if not hasattr(_meta_serializer, 'fields'):
+                                fields = '__all__'
+                            elif _meta_serializer.fields != '__all__':
+                                fields = list(
+                                    _meta_serializer.fields) + ['__str__', ]
+                            else:
+                                fields = _meta_serializer.fields
 
                     def get___str__(self, obj):
                         return str(obj)
@@ -150,19 +153,19 @@ ApiViewSetConstrutor.build_class()
 
 """
 1. Constroi uma rest_framework.viewsets.ModelViewSet para 
-   todos os models de todas as apps do sapl
+   todos os models de todas as apps do projeto
 2. Define DjangoFilterBackend como ferramenta de filtro dos campos
 3. Define Serializer como a seguir:
     3.1 - Define um Serializer genérico para cada módel
-    3.2 - Recupera Serializer customizado em sapl.api.serializers
+    3.2 - Recupera Serializer customizado em [project].api.serializers
     3.3 - Para todo model é opcional a existência de 
-          sapl.api.serializers.{model}Serializer.
+          [project].api.serializers.{model}Serializer.
           Caso não seja definido um Serializer customizado, utiliza-se o trivial
 4. Define um FilterSet como a seguir:
     4.1 - Define um FilterSet genérico para cada módel
-    4.2 - Recupera FilterSet customizado em sapl.api.forms
+    4.2 - Recupera FilterSet customizado em [project].api.forms
     4.3 - Para todo model é opcional a existência de 
-          sapl.api.forms.{model}FilterSet.
+          [project].api.forms.{model}FilterSet.
           Caso não seja definido um FilterSet customizado, utiliza-se o trivial
     4.4 - todos os campos que aceitam lookup 'exact' 
           podem ser filtrados por default
@@ -244,7 +247,6 @@ class _ActionViewSet:
 
 @customize(PesquisaNode)
 class _PesquisaNodeViewSet:
-    pass
 
     def list(self, request, *args, **kwargs):
         self.queryset = PesquisaNode.objects.filter(parent__isnull=True)
