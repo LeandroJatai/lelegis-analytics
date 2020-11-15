@@ -144,6 +144,16 @@ class Action(models.Model):
         verbose_name=_('Parent'),
         on_delete=PROTECT)
 
+    class Meta:
+        ordering = ['-id']
+
+    def __str__(self):
+        return f'{self.json["uri"]}'
+
+    @property
+    def parents(self):
+        return ((self.parent.id, ) + self.parent.parents) if self.parent else ()
+
     def is_my_parent(self, uri):
         if self.json and 'uri' in self.json and self.json['uri'] == uri:
             return True

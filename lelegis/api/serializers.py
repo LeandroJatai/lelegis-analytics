@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 
-from lelegis.dataset.models import PesquisaNode, UF, Municipio
+from lelegis.dataset.models import PesquisaNode, UF, Municipio, Action
 
 
 class ExecSerializer(serializers.Serializer):
@@ -86,3 +86,14 @@ class PesquisaNodeSerializer(serializers.ModelSerializer):
 
     def get_EXEC(self, obj):
         return ExecSerializer(obj).data
+
+
+class ActionSerializer(serializers.ModelSerializer):
+    parents = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Action
+        fields = '__all__'
+
+    def get_parents(self, obj):
+        return obj.parents
